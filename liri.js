@@ -13,28 +13,34 @@ var fs = require("fs");
 var Spotify = require("node-spotify-api");
 var spotify = new Spotify(keys.spotify);
 
-var search = process.argv[2];
-var term = process.argv.slice(3).join(" ");
+// Get command and search term from user
+function getData() {
+  var command = process.argv[2];
+  var term = process.argv.slice(3).join(" ");
+  doSearch(command, term);
+}
 
-switch (search) {
-  case "concert-this":
-    concertThis();
-    break;
-  case "spotify-this-song":
-    spotifyThisSong();
-    break;
-  case "movie-this":
-    movieThis();
-    break;
-  case "do-what-it-says":
-    console.log("do-what-it-says");
-    break;
-  default:
-    console.log("\r\nNo command entered.");
+function doSearch(command, term) {
+  switch (command) {
+    case "concert-this":
+      concertThis(term);
+      break;
+    case "spotify-this-song":
+      spotifyThisSong(term);
+      break;
+    case "movie-this":
+      movieThis(term);
+      break;
+    case "do-what-it-says":
+      doWhatItSays();
+      break;
+    default:
+      console.log("\r\nNo command entered.");
+  }
 }
 
 // Return concert data for a specified artist name
-function concertThis() {
+function concertThis(term) {
   if (term === "") {
     console.log("\r\nNo artist name entered.");
   } else {
@@ -56,20 +62,24 @@ function concertThis() {
           count++;
         });
       })
-      .catch(function (error) {
-        axiosError(error);
+      .catch(function () {
+        console.log(
+          "\r\nThe artist name you entered was invalid or did not return any results. Please try again."
+        );
       });
   }
 }
 
 // Return song data for a specified song title
-function spotifyThisSong() {
+function spotifyThisSong(term) {
   if (term === "") {
     console.log("\r\nNo song title entered.");
   } else {
     spotify.search({ type: "track", query: term }, function (err, data) {
       if (err) {
-        return console.log("Error occurred: " + err);
+        return console.log(
+          "\r\nThe song title you entered was invalid or did not return any results. Please try again."
+        );
       }
 
       var arrArtistData = data.tracks.items[0].artists;
@@ -88,13 +98,17 @@ function spotifyThisSong() {
 }
 
 // Return movie data for a specified movie title
-function movieThis() {
+function movieThis(term) {
   if (term === "") {
     console.log("\r\nNo movie title entered.");
   } else {
     axios
       .get(`http://www.omdbapi.com/?apikey=trilogy&t=${term}`)
       .then(function (response) {
+        if (response.data.Title === undefined) {
+          throw "";
+        }
+
         console.log(`\r\nMovie title: ${response.data.Title}`);
         console.log(`Year: ${response.data.Year}`);
         console.log(`IMDb rating: ${response.data.Ratings[0].Value}`);
@@ -105,28 +119,33 @@ function movieThis() {
         console.log(`Language: ${response.data.Language}`);
         console.log(`Actors: ${response.data.Actors}`);
       })
-      .catch(function (error) {
-        axiosError(error);
+      .catch(function () {
+        console.log(
+          "\r\nThe movie title you entered was invalid or did not return any results. Please try again."
+        );
       });
   }
 }
 
-function doWhatItSays() {}
+function doWhatItSays() {
+  fs.readFile("random.txt", "utf8", function (error, data) {
+    if (error) {
+      return console.log(
+        "\r\nThere was an error completing your request. Please try again."
+      );
+    }
 
-function axiosError(error) {
-  if (error.response) {
-    // The request was made and the server responded with a status code
-    // that falls out of the range of 2xx
-    console.log(error.response.data);
-    console.log(error.response.status);
-    console.log(error.response.headers);
-  } else if (error.request) {
-    // The request was made but no response was received
-    // `error.request` is an object that comes back with details pertaining to the error that occurred.
-    console.log(error.request);
-  } else {
-    // Something happened in setting up the request that triggered an Error
-    console.log("Error", error.message);
-  }
-  console.log(error.config);
+    var dataArr = data.split(",");
+    var command = dataArr[0];
+    var term = dataArr[1];
+
+    // Take quotes out of search term
+    if (term.charAt(0) === '"' && term.charAt(term.length - 1) === '"') {
+      term = term.substring(1, term.length - 1);
+    }
+
+    doSearch(command, term);
+  });
 }
+
+getData();
