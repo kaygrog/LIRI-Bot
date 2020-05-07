@@ -129,7 +129,6 @@ function movieThis(term) {
         console.log(
           "\r\nThe movie title you entered was invalid or did not return any results. Please try again."
         );
-        console.log(error);
       });
   }
 }
