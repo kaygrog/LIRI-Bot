@@ -35,7 +35,7 @@ function doSearch(command, term) {
       doWhatItSays();
       break;
     default:
-      console.log("\r\nNo command entered.");
+      console.log("\r\nInvalid command entered.");
   }
 }
 
@@ -49,18 +49,22 @@ function concertThis(term) {
         `https://rest.bandsintown.com/artists/${term}/events?app_id=codingbootcamp`
       )
       .then(function (response) {
-        var dataArr = response.data;
-        var count = 0;
+        if (response.data[0] === undefined) {
+          throw "";
+        } else {
+          var dataArr = response.data;
+          var count = 0;
 
-        dataArr.forEach((e) => {
-          var eventDate = moment(e.datetime).format("MM/DD/YYYY");
+          dataArr.forEach((e) => {
+            var eventDate = moment(e.datetime).format("MM/DD/YYYY");
 
-          console.log(`\r\nEvent ${count + 1}:`);
-          console.log(`\tVenue name: ${e.venue.name}`);
-          console.log(`\tVenue location: ${e.venue.location}`);
-          console.log(`\tEvent date: ${eventDate}`);
-          count++;
-        });
+            console.log(`\r\nEvent ${count + 1}:`);
+            console.log(`\tVenue name: ${e.venue.name}`);
+            console.log(`\tVenue location: ${e.venue.location}`);
+            console.log(`\tEvent date: ${eventDate}`);
+            count++;
+          });
+        }
       })
       .catch(function () {
         console.log(
@@ -112,17 +116,20 @@ function movieThis(term) {
         console.log(`\r\nMovie title: ${response.data.Title}`);
         console.log(`Year: ${response.data.Year}`);
         console.log(`IMDb rating: ${response.data.Ratings[0].Value}`);
-        console.log(
-          `Rotten Tomatoes rating: ${response.data.Ratings[1].Value}`
-        );
+        if (response.data.Ratings[1] !== undefined) {
+          console.log(
+            `Rotten Tomatoes rating: ${response.data.Ratings[1].Value}`
+          );
+        }
         console.log(`Country: ${response.data.Country}`);
         console.log(`Language: ${response.data.Language}`);
         console.log(`Actors: ${response.data.Actors}`);
       })
-      .catch(function () {
+      .catch(function (error) {
         console.log(
           "\r\nThe movie title you entered was invalid or did not return any results. Please try again."
         );
+        console.log(error);
       });
   }
 }
